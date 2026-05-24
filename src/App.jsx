@@ -1,267 +1,520 @@
 import "./App.css"
-import { useEffect, useState } from "react"
+import logo from "./assets/logo.png"
+import { useEffect, useMemo, useState } from "react"
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore"
+import { db } from "./firebase"
 
 const chapters = [
   {
     title: "01",
-    subtitle: "A Estrutura das Proteínas",
+    subtitle: "Estrutura das Proteínas",
+    sector: "SECTOR ALPHA",
     icon: "🧬",
     boss: "HELIX PRIME",
     bossIcon: "🦠",
-    lore: "O Sistema Helix detectou instabilidade na base molecular das proteínas.",
+    lore: "Instabilidade detectada na arquitetura molecular das proteínas.",
     questions: [
       {
-        question: "Qual é a unidade básica que forma as proteínas?",
-        answers: ["Glicose", "Aminoácido", "Ácido graxo", "Nucleotídeo"],
+        question: "Durante uma aula prática, os alunos observaram que a hemoglobina possui uma forma específica que permite o transporte de oxigênio no sangue. Qual fator é responsável pela estrutura tridimensional das proteínas?",
+        answers: ["Quantidade de glicose", "Sequência de aminoácidos", "Presença de vitaminas", "Quantidade de água"],
         correct: 1,
+        feedback: "A sequência de aminoácidos influencia o dobramento e a forma tridimensional da proteína.",
       },
       {
-        question: "As proteínas são formadas principalmente por:",
-        answers: ["Monossacarídeos", "Aminoácidos", "Ácidos graxos", "Vitaminas"],
+        question: "Uma atleta apresentou fadiga intensa após alterações na produção de proteínas musculares. O médico explicou que a mudança ocorreu por erro na sequência de aminoácidos. Essa alteração afeta principalmente qual nível estrutural da proteína?",
+        answers: ["Estrutura primária", "Estrutura secundária", "Estrutura terciária", "Estrutura quaternária"],
+        correct: 0,
+        feedback: "A estrutura primária corresponde à sequência de aminoácidos.",
+      },
+      {
+        question: "Em um laboratório, pesquisadores estudavam proteínas fibrosas presentes no cabelo e nas unhas. Qual proteína está relacionada a essas estruturas?",
+        answers: ["Insulina", "Albumina", "Queratina", "Hemoglobina"],
+        correct: 2,
+        feedback: "A queratina é uma proteína fibrosa presente em cabelos, unhas e pele.",
+      },
+      {
+        question: "Durante um estudo sobre enzimas digestivas, foi observado que pequenas mudanças na estrutura proteica alteravam completamente sua função. Isso demonstra que:",
+        answers: ["Toda proteína possui a mesma função", "A função depende da estrutura da proteína", "As proteínas não sofrem alterações", "O formato não interfere na atividade"],
         correct: 1,
+        feedback: "A função de uma proteína depende diretamente de sua estrutura.",
       },
       {
-        question: "Qual elemento está presente em todos os aminoácidos?",
-        answers: ["Nitrogênio", "Cloro", "Cálcio", "Ferro"],
-        correct: 0,
+        question: "Uma estudante comparou colágeno e hemoglobina durante um seminário. O colágeno é classificado como:",
+        answers: ["Proteína globular", "Proteína hormonal", "Proteína fibrosa", "Proteína lipídica"],
+        correct: 2,
+        feedback: "O colágeno é uma proteína fibrosa, importante na sustentação dos tecidos.",
       },
       {
-        question: "Os aminoácidos possuem em comum:",
-        answers: ["Grupo amino e grupo carboxila", "Somente glicose", "Somente lipídios", "Somente fosfato"],
+        question: "Durante uma mutação genética, ocorreu troca de apenas um aminoácido na cadeia proteica. Mesmo sendo pequena, essa alteração pode:",
+        answers: ["Não causar nenhuma mudança", "Melhorar apenas a digestão", "Alterar a função da proteína", "Transformar proteína em carboidrato"],
+        correct: 2,
+        feedback: "A troca de um aminoácido pode modificar a estrutura e a função da proteína.",
+      },
+      {
+        question: "No hospital, um paciente apresentou anemia falciforme causada por alteração estrutural da hemoglobina. Esse caso mostra a importância de:",
+        answers: ["Vitaminas na respiração", "Estrutura correta das proteínas", "Excesso de lipídios", "Produção de glicose"],
+        correct: 1,
+        feedback: "A anemia falciforme mostra como alterações estruturais podem comprometer a função proteica.",
+      },
+      {
+        question: "Durante uma atividade, os alunos observaram que algumas proteínas possuem mais de uma cadeia polipeptídica associada. Essa característica corresponde à:",
+        answers: ["Estrutura primária", "Estrutura secundária", "Estrutura terciária", "Estrutura quaternária"],
+        correct: 3,
+        feedback: "A estrutura quaternária ocorre quando há associação de duas ou mais cadeias polipeptídicas.",
+      },
+      {
+        question: "Uma nutricionista explicou que proteínas são fundamentais para crescimento e reparo dos tecidos. As proteínas são formadas por unidades chamadas:",
+        answers: ["Ácidos graxos", "Monossacarídeos", "Aminoácidos", "Nucleotídeos"],
+        correct: 2,
+        feedback: "As proteínas são formadas por aminoácidos.",
+      },
+      {
+        question: "Em um experimento, os pesquisadores analisaram as interações que mantêm o formato das proteínas. Qual interação ajuda na estabilização estrutural?",
+        answers: ["Ligações de hidrogênio", "Ligações metálicas", "Corrente elétrica", "Fotossíntese"],
         correct: 0,
+        feedback: "Ligações de hidrogênio ajudam a estabilizar estruturas proteicas.",
       },
     ],
   },
   {
     title: "02",
     subtitle: "Ligações Peptídicas",
+    sector: "SECTOR BETA",
     icon: "⚡",
     boss: "PEPTIDE BREAKER",
     bossIcon: "☣",
     lore: "As cadeias proteicas começaram a se romper. Restaure as ligações.",
     questions: [
       {
-        question: "Qual ligação une os aminoácidos em uma proteína?",
+        question: "Durante a digestão, proteínas são quebradas em aminoácidos. Qual ligação une os aminoácidos em uma proteína?",
         answers: ["Ligação iônica", "Ligação peptídica", "Ligação metálica", "Ligação fosfodiéster"],
         correct: 1,
+        feedback: "A ligação peptídica une aminoácidos para formar proteínas.",
       },
       {
-        question: "A ligação peptídica ocorre entre:",
-        answers: ["Grupo amino e carboxila", "Dois lipídios", "ATP e glicose", "DNA e RNA"],
-        correct: 0,
-      },
-      {
-        question: "A formação da ligação peptídica libera:",
-        answers: ["Oxigênio", "ATP", "Água", "Glicose"],
+        question: "Uma pesquisadora sintetizou proteínas em laboratório unindo aminoácidos artificialmente. A ligação formada ocorre entre:",
+        answers: ["Dois grupos carboxila", "Dois grupos amino", "Grupo amino e grupo carboxila", "Açúcar e lipídio"],
         correct: 2,
+        feedback: "A ligação peptídica ocorre entre o grupo amino de um aminoácido e o grupo carboxila de outro.",
       },
       {
-        question: "Várias ligações peptídicas formam:",
-        answers: ["Cadeia polipeptídica", "Molécula de gordura", "Parede celular", "Hemácia"],
+        question: "Durante a aula, o professor explicou que a formação da ligação peptídica libera uma molécula de:",
+        answers: ["Oxigênio", "Água", "Glicose", "ATP"],
+        correct: 1,
+        feedback: "A formação da ligação peptídica libera água, em uma reação de condensação.",
+      },
+      {
+        question: "No processo de digestão proteica, enzimas quebram as ligações peptídicas. Esse processo recebe o nome de:",
+        answers: ["Hidrólise", "Fermentação", "Respiração", "Osmose"],
         correct: 0,
+        feedback: "A hidrólise quebra ligações químicas com participação da água.",
+      },
+      {
+        question: "Em um hospital, um paciente apresentou dificuldade na digestão de proteínas devido à deficiência enzimática. Qual estrutura seria mais afetada?",
+        answers: ["Lipídios", "Ligações peptídicas", "Vitaminas", "Minerais"],
+        correct: 1,
+        feedback: "A digestão proteica envolve a quebra das ligações peptídicas.",
+      },
+      {
+        question: "Durante um estudo sobre bioquímica, os alunos aprenderam que dipeptídeos são formados por:",
+        answers: ["Dois aminoácidos unidos", "Dois lipídios unidos", "Dois carboidratos unidos", "Dois minerais unidos"],
+        correct: 0,
+        feedback: "Dipeptídeos são formados por dois aminoácidos unidos por ligação peptídica.",
+      },
+      {
+        question: "Uma proteína grande é formada por centenas de aminoácidos conectados. Essa sequência é chamada de:",
+        answers: ["Cadeia polipeptídica", "Cadeia lipídica", "Cadeia glicêmica", "Cadeia nucleica"],
+        correct: 0,
+        feedback: "A cadeia polipeptídica é formada pela união de vários aminoácidos.",
+      },
+      {
+        question: "Ao cozinhar alimentos ricos em proteína, as ligações peptídicas permanecem intactas inicialmente. Isso ocorre porque elas são:",
+        answers: ["Muito frágeis", "Extremamente instáveis", "Relativamente resistentes", "Formadas apenas no frio"],
+        correct: 2,
+        feedback: "As ligações peptídicas são relativamente resistentes e não se rompem facilmente apenas com aquecimento inicial.",
+      },
+      {
+        question: "Em uma prática laboratorial, os alunos observaram a quebra de proteínas pela ação da pepsina. A pepsina atua principalmente sobre:",
+        answers: ["Carboidratos", "Ligações peptídicas", "Vitaminas", "Ácidos nucleicos"],
+        correct: 1,
+        feedback: "A pepsina atua na digestão de proteínas, quebrando ligações peptídicas.",
+      },
+      {
+        question: "Uma estudante afirmou que sem ligações peptídicas não existiriam proteínas funcionais. Essa afirmação está:",
+        answers: ["Correta", "Parcialmente correta", "Incorreta", "Sem relação com bioquímica"],
+        correct: 0,
+        feedback: "Sem ligações peptídicas, os aminoácidos não formariam cadeias proteicas.",
       },
     ],
   },
   {
     title: "03",
     subtitle: "Dobramento Proteico",
+    sector: "SECTOR GAMMA",
     icon: "🔥",
     boss: "FOLDING ERROR",
     bossIcon: "🧬",
     lore: "O dobramento molecular foi corrompido. Estabilize a estrutura proteica.",
     questions: [
       {
-        question: "A estrutura primária da proteína representa:",
-        answers: ["A sequência de aminoácidos", "A forma tridimensional", "A união de várias cadeias", "A hélice alfa"],
+        question: "Pesquisadores observaram que proteínas mal dobradas podem causar doenças neurodegenerativas. Isso ocorre porque:",
+        answers: ["O dobramento interfere na função da proteína", "Toda proteína funciona deformada", "Proteínas não possuem formato específico", "Apenas lipídios sofrem alterações"],
         correct: 0,
+        feedback: "O dobramento correto é essencial para a função da proteína.",
       },
       {
-        question: "A estrutura secundária pode formar:",
-        answers: ["Hélice alfa e folha beta", "DNA e RNA", "Glicose e frutose", "ATP e ADP"],
-        correct: 0,
+        question: "Durante um estudo sobre Alzheimer, cientistas relacionaram a doença ao acúmulo de proteínas mal dobradas. Esse processo compromete:",
+        answers: ["Apenas a digestão", "O funcionamento celular", "A circulação sanguínea apenas", "A produção de glicose"],
+        correct: 1,
+        feedback: "Proteínas mal dobradas podem se acumular e prejudicar o funcionamento celular.",
       },
       {
-        question: "A estrutura quaternária ocorre quando:",
-        answers: ["Há mais de uma cadeia polipeptídica", "A proteína perde água", "O aminoácido vira glicose", "A enzima é destruída"],
-        correct: 0,
+        question: "No laboratório, uma proteína recém-produzida precisou adquirir sua forma funcional. Esse processo é chamado de:",
+        answers: ["Replicação", "Dobramento proteico", "Fermentação", "Transcrição"],
+        correct: 1,
+        feedback: "O dobramento proteico permite que a proteína adquira sua forma funcional.",
       },
       {
-        question: "A forma tridimensional da proteína influencia diretamente:",
-        answers: ["Sua função", "Sua cor apenas", "Seu cheiro", "Sua quantidade de água"],
+        question: "Algumas proteínas auxiliam outras no dobramento correto. Essas proteínas especiais são chamadas de:",
+        answers: ["Enzimas digestivas", "Chaperonas moleculares", "Hormônios", "Lipoproteínas"],
+        correct: 1,
+        feedback: "Chaperonas moleculares auxiliam no dobramento adequado de proteínas.",
+      },
+      {
+        question: "Uma alteração genética causou erro no dobramento de proteínas pulmonares. Qual consequência pode ocorrer?",
+        answers: ["Perda de função da proteína", "Formação de vitaminas", "Produção excessiva de água", "Transformação em carboidrato"],
         correct: 0,
+        feedback: "Erro no dobramento pode levar à perda de função proteica.",
+      },
+      {
+        question: "Durante um experimento, os cientistas mudaram o pH do meio e observaram alteração no formato das proteínas. Isso demonstra que o dobramento depende:",
+        answers: ["Apenas da luz", "Das condições do ambiente", "Apenas da glicose", "Exclusivamente da temperatura corporal"],
+        correct: 1,
+        feedback: "O dobramento pode ser influenciado por pH, temperatura e outras condições ambientais.",
+      },
+      {
+        question: "Um estudante comparou proteínas normais e proteínas mal dobradas. As proteínas corretamente dobradas apresentam:",
+        answers: ["Maior funcionalidade", "Menor estabilidade sempre", "Ausência de aminoácidos", "Estrutura desorganizada"],
+        correct: 0,
+        feedback: "Proteínas corretamente dobradas tendem a exercer melhor sua função.",
+      },
+      {
+        question: "Em uma pesquisa médica, proteínas defeituosas acumularam-se dentro das células. Esse acúmulo pode levar:",
+        answers: ["Ao funcionamento ideal da célula", "À morte celular", "Ao aumento de vitaminas", "À produção de oxigênio"],
+        correct: 1,
+        feedback: "O acúmulo de proteínas defeituosas pode causar toxicidade celular.",
+      },
+      {
+        question: "Durante a síntese proteica, o dobramento ocorre após:",
+        answers: ["A formação da cadeia polipeptídica", "A digestão completa", "A eliminação da proteína", "A fotossíntese"],
+        correct: 0,
+        feedback: "Após a formação da cadeia polipeptídica, a proteína precisa se dobrar corretamente.",
+      },
+      {
+        question: "No desenvolvimento de medicamentos, cientistas estudam o dobramento proteico para evitar doenças. Isso é importante porque:",
+        answers: ["A estrutura define a função da proteína", "Proteínas não participam de doenças", "Apenas carboidratos sofrem alterações", "Toda proteína funciona da mesma maneira"],
+        correct: 0,
+        feedback: "A estrutura proteica está diretamente relacionada à sua função.",
       },
     ],
   },
   {
     title: "04",
     subtitle: "Desnaturação Proteica",
+    sector: "SECTOR DELTA",
     icon: "☢",
     boss: "PROTEIN COLLAPSE",
     bossIcon: "💀",
     lore: "O calor molecular aumentou. Proteínas estão perdendo forma e função.",
     questions: [
       {
-        question: "A desnaturação proteica causa:",
-        answers: ["Perda da estrutura da proteína", "Formação de DNA", "Aumento de glicose", "Produção de lipídios"],
-        correct: 0,
+        question: "Ao cozinhar um ovo, a clara muda de transparente para branca devido à:",
+        answers: ["Digestão proteica", "Desnaturação das proteínas", "Formação de lipídios", "Produção de glicose"],
+        correct: 1,
+        feedback: "O calor desnatura as proteínas da clara, alterando sua estrutura.",
       },
       {
-        question: "Qual fator pode causar desnaturação?",
-        answers: ["Temperatura elevada", "Sono", "Oxigênio normal", "Repouso"],
-        correct: 0,
+        question: "Durante uma febre muito alta, proteínas do organismo podem perder sua estrutura funcional. Esse processo é chamado de:",
+        answers: ["Replicação", "Hidratação", "Desnaturação", "Osmose"],
+        correct: 2,
+        feedback: "A desnaturação é a perda da estrutura funcional da proteína.",
       },
       {
-        question: "Quando uma proteína desnatura, ela pode perder:",
-        answers: ["Sua função biológica", "Seu núcleo celular", "Seu DNA", "Sua membrana"],
+        question: "Uma estudante adicionou álcool em uma proteína durante um experimento e observou alteração estrutural. O álcool atuou como:",
+        answers: ["Agente desnaturante", "Vitamina", "Catalisador energético", "Aminoácido"],
         correct: 0,
+        feedback: "O álcool pode desnaturar proteínas, alterando sua estrutura.",
       },
       {
-        question: "Alteração extrema de pH pode:",
-        answers: ["Desnaturar proteínas", "Criar aminoácidos do nada", "Transformar proteína em glicose", "Aumentar DNA"],
+        question: "Quando uma proteína sofre desnaturação, geralmente ocorre:",
+        answers: ["Alteração da sua função", "Aumento da glicose", "Formação de DNA", "Produção de minerais"],
         correct: 0,
+        feedback: "Ao perder sua estrutura, a proteína pode perder ou alterar sua função.",
+      },
+      {
+        question: "No hospital, o álcool 70% é usado para destruir proteínas de microrganismos. Isso ocorre porque ele provoca:",
+        answers: ["Fermentação", "Desnaturação proteica", "Fotossíntese", "Respiração celular"],
+        correct: 1,
+        feedback: "O álcool 70% desnatura proteínas de microrganismos, ajudando na antissepsia.",
+      },
+      {
+        question: "Durante uma prática culinária, o calor alterou a estrutura da albumina presente no ovo. O calor afetou principalmente:",
+        answers: ["A forma da proteína", "O número de aminoácidos", "A composição mineral", "A quantidade de vitaminas"],
+        correct: 0,
+        feedback: "O calor altera a forma da proteína, causando desnaturação.",
+      },
+      {
+        question: "Uma proteína desnaturada pode perder sua atividade porque:",
+        answers: ["Seu formato foi alterado", "Ela ganhou aminoácidos", "Produziu mais energia", "Transformou-se em carboidrato"],
+        correct: 0,
+        feedback: "A atividade depende da conformação correta da proteína.",
+      },
+      {
+        question: "Mudanças extremas de pH podem causar desnaturação porque:",
+        answers: ["Alteram as interações químicas da proteína", "Criam novos aminoácidos", "Produzem oxigênio", "Aumentam a glicose"],
+        correct: 0,
+        feedback: "O pH extremo altera interações químicas que estabilizam a proteína.",
+      },
+      {
+        question: "Em laboratório, pesquisadores utilizaram altas temperaturas para estudar estabilidade proteica. A temperatura elevada pode:",
+        answers: ["Preservar totalmente a proteína", "Desnaturar proteínas", "Criar proteínas novas instantaneamente", "Formar vitaminas"],
+        correct: 1,
+        feedback: "Altas temperaturas podem romper interações que mantêm a estrutura proteica.",
+      },
+      {
+        question: "Durante uma infecção grave, alterações celulares podem afetar proteínas essenciais do organismo. A desnaturação proteica compromete principalmente:",
+        answers: ["A estrutura e a função", "Apenas a cor da célula", "Apenas os lipídios", "O tamanho do núcleo celular"],
+        correct: 0,
+        feedback: "A desnaturação compromete tanto a estrutura quanto a função da proteína.",
       },
     ],
   },
   {
-    title: "CHEFÃO",
-    subtitle: "O Despertar da Helix",
+    title: "FINAL",
+    subtitle: "O Despertar da Hélice",
+    sector: "CORE ROOM",
     icon: "👑",
     boss: "HELIX MONARCH",
     bossIcon: "👑",
     lore: "O núcleo Helix despertou. Enfrente a entidade final e restaure o equilíbrio celular.",
     questions: [
       {
-        question: "As proteínas são importantes porque:",
-        answers: ["Atuam em estrutura, transporte, defesa e enzimas", "Só armazenam gordura", "Formam apenas glicose", "Não têm função no organismo"],
-        correct: 0,
+        question: "Um cientista criou uma proteína artificial, mas ela não conseguia desempenhar sua função. Após análise, descobriu-se erro no dobramento proteico. Qual a principal consequência desse erro?",
+        answers: ["Aumento de vitaminas", "Perda da função biológica", "Formação de glicose", "Produção excessiva de lipídios"],
+        correct: 1,
+        feedback: "Erro no dobramento pode causar perda da função biológica da proteína.",
       },
       {
-        question: "As enzimas são proteínas que:",
-        answers: ["Aceleram reações químicas", "Formam ossos apenas", "Destroem ATP sempre", "São carboidratos"],
+        question: "Durante uma epidemia, pesquisadores estudaram proteínas virais para desenvolver vacinas. Por que entender a estrutura proteica é importante?",
+        answers: ["Porque define a função das proteínas", "Porque proteínas não sofrem alterações", "Porque apenas o DNA importa", "Porque proteínas não participam de doenças"],
         correct: 0,
+        feedback: "A estrutura proteica influencia função, reconhecimento imunológico e desenvolvimento de vacinas.",
       },
       {
-        question: "Uma proteína funcional depende principalmente de:",
-        answers: ["Sua forma e sequência correta", "Sua cor", "Seu cheiro", "Seu peso isolado"],
-        correct: 0,
+        question: "Em uma aula prática, alunos aqueceram proteínas e observaram alteração estrutural. Esse fenômeno representa:",
+        answers: ["Replicação celular", "Desnaturação proteica", "Respiração celular", "Produção de ATP"],
+        correct: 1,
+        feedback: "O aquecimento pode causar desnaturação proteica.",
       },
       {
-        question: "Se a proteína perde sua conformação, ela pode:",
-        answers: ["Perder sua função", "Virar DNA", "Virar glicose", "Criar uma membrana"],
+        question: "Uma mutação alterou a sequência de aminoácidos de uma proteína humana. Qual estrutura foi afetada primeiro?",
+        answers: ["Estrutura primária", "Estrutura terciária", "Estrutura quaternária", "Estrutura secundária"],
         correct: 0,
+        feedback: "A sequência de aminoácidos corresponde à estrutura primária.",
+      },
+      {
+        question: "Em um hospital, enzimas digestivas foram utilizadas para quebrar proteínas em aminoácidos. Essas enzimas atuam principalmente sobre:",
+        answers: ["Lipídios", "Ligações peptídicas", "Vitaminas", "Ácidos nucleicos"],
+        correct: 1,
+        feedback: "Enzimas digestivas quebram ligações peptídicas nas proteínas.",
+      },
+      {
+        question: "Pesquisadores descobriram proteínas acumuladas no cérebro de pacientes com Alzheimer. Essas proteínas estavam:",
+        answers: ["Bem dobradas", "Mal dobradas", "Sem aminoácidos", "Transformadas em lipídios"],
+        correct: 1,
+        feedback: "O acúmulo de proteínas mal dobradas está associado a doenças neurodegenerativas.",
+      },
+      {
+        question: "Durante uma investigação científica, observou-se que mudanças de pH alteravam a estabilidade proteica. Isso acontece porque o pH interfere:",
+        answers: ["Nas interações químicas da proteína", "Na produção de glicose apenas", "No número de aminoácidos", "Apenas na cor da proteína"],
+        correct: 0,
+        feedback: "O pH pode alterar interações que mantêm a estabilidade proteica.",
+      },
+      {
+        question: "Uma proteína composta por várias cadeias polipeptídicas apresenta qual nível estrutural?",
+        answers: ["Primário", "Secundário", "Terciário", "Quaternário"],
+        correct: 3,
+        feedback: "A estrutura quaternária envolve a associação de várias cadeias polipeptídicas.",
+      },
+      {
+        question: "Ao analisar uma enzima, os cientistas perceberam que sua atividade dependia do formato específico do sítio ativo. Isso comprova que:",
+        answers: ["Estrutura e função estão relacionadas", "Proteínas funcionam de qualquer forma", "O formato não interfere na atividade", "Apenas vitaminas possuem função específica"],
+        correct: 0,
+        feedback: "A atividade enzimática depende da relação entre estrutura e função.",
+      },
+      {
+        question: "Uma equipe de enfermagem estudava o efeito da febre extrema sobre proteínas do organismo. A temperatura elevada pode causar:",
+        answers: ["Desnaturação proteica", "Formação de DNA", "Produção de glicose", "Criação de aminoácidos novos"],
+        correct: 0,
+        feedback: "Temperaturas elevadas podem causar desnaturação proteica.",
       },
     ],
   },
 ]
 
-const initialRanking = []
-
-const avatars = ["🧑🏻‍🚀", "🧑🏽‍🔬", "🥷", "🤖"]
+const avatars = ["🧑🏻‍🚀", "🧑🏽‍🔬", "🥷", "🤖", "🧬"]
 
 function BottomNav({ active, setScreen }) {
   return (
     <div className="bottom-nav">
-      <div className={active === "home" ? "nav-item active-nav" : "nav-item"} onClick={() => setScreen("home")}>
-        <div>⌂</div>
+      <button className={active === "home" ? "nav-item active-nav" : "nav-item"} onClick={() => setScreen("home")}>
+        ⌂
         <span>INÍCIO</span>
-      </div>
+      </button>
 
-      <div className={active === "chapters" ? "nav-item active-nav" : "nav-item"} onClick={() => setScreen("chapters")}>
-        <div>🧬</div>
+      <button className={active === "chapters" ? "nav-item active-nav" : "nav-item"} onClick={() => setScreen("chapters")}>
+        🧬
         <span>MISSÕES</span>
-      </div>
+      </button>
 
-      <div className={active === "ranking" ? "nav-item active-nav" : "nav-item"} onClick={() => setScreen("ranking")}>
-        <div>🏆</div>
+      <button className={active === "ranking" ? "nav-item active-nav" : "nav-item"} onClick={() => setScreen("ranking")}>
+        🏆
         <span>RANKING</span>
-      </div>
+      </button>
 
-      <div className={active === "team" ? "nav-item active-nav" : "nav-item"} onClick={() => setScreen("team")}>
-        <div>👥</div>
+      <button className={active === "team" ? "nav-item active-nav" : "nav-item"} onClick={() => setScreen("team")}>
+        👥
         <span>EQUIPE</span>
-      </div>
+      </button>
     </div>
   )
 }
 
 export default function App() {
-  const [screen, setScreen] = useState("home")
+  const [screen, setScreen] = useState("boot")
   const [teamName, setTeamName] = useState("")
   const [teamAvatar, setTeamAvatar] = useState("🧑🏻‍🚀")
   const [xp, setXp] = useState(0)
   const [selected, setSelected] = useState(null)
-  const [feedback, setFeedback] = useState("")
   const [timeLeft, setTimeLeft] = useState(30)
   const [gameOver, setGameOver] = useState(false)
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [combo, setCombo] = useState(0)
   const [maxCombo, setMaxCombo] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
-  const [comboMessage, setComboMessage] = useState("")
   const [bossHp, setBossHp] = useState(100)
   const [currentChapter, setCurrentChapter] = useState(0)
-  const [transitioning, setTransitioning] = useState(false)
   const [chapterIntro, setChapterIntro] = useState(false)
-  const [successAnimation, setSuccessAnimation] = useState(false)
-  const [unlockedChapters, setUnlockedChapters] = useState([0])
-  const [liveRanking, setLiveRanking] = useState(initialRanking)
+  const [answeredTotal, setAnsweredTotal] = useState(0)
+  const [pendingAfterPortal, setPendingAfterPortal] = useState({ screen: "question" })
+  const [feedbackData, setFeedbackData] = useState(null)
+  const [gateTarget, setGateTarget] = useState({
+    screen: "team",
+    label: "ACCESSING HELIX CORE",
+    sublabel: "Sincronizando núcleo biológico...",
+  })
+
+  const [liveRanking, setLiveRanking] = useState([])
 
   const chapter = chapters[currentChapter]
   const question = chapter.questions[currentQuestion]
-  const bossDefeated = bossHp <= 0
+  const teamDisplayName = teamName.trim() || "CELLULAR AGENTS"
   const bossCritical = bossHp <= 30 && bossHp > 0
 
-  const teamDisplayName = teamName.trim() || "CELLULAR AGENTS"
+  const totalQuestions = useMemo(
+    () => chapters.reduce((sum, item) => sum + item.questions.length, 0),
+    []
+  )
+
+  const progressPercent = Math.round((answeredTotal / totalQuestions) * 100)
+
+  useEffect(() => {
+    const rankingQuery = query(collection(db, "ranking"), orderBy("xp", "desc"))
+
+    const unsubscribe = onSnapshot(rankingQuery, (snapshot) => {
+      const onlineRanking = snapshot.docs.map((document) => ({
+        id: document.id,
+        ...document.data(),
+      }))
+
+      setLiveRanking(onlineRanking)
+    })
+
+    return () => unsubscribe()
+  }, [])
+
+  const getTeamId = (name) => {
+    return (
+      name
+        .trim()
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^A-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "CELLULAR-AGENTS"
+    )
+  }
 
   const getRank = () => {
-    if (xp >= 1800) return "👑 CELLULAR MONARCH"
-    if (xp >= 1200) return "☢ HELIX MASTER"
-    if (xp >= 800) return "🔥 PROTEIN HUNTER"
-    if (xp >= 400) return "⚡ BIO AGENT"
+    if (xp >= 3000) return "👑 CELLULAR MONARCH"
+    if (xp >= 2200) return "☢ HELIX MASTER"
+    if (xp >= 1400) return "🔥 PROTEIN HUNTER"
+    if (xp >= 700) return "⚡ BIO AGENT"
     return "🧬 ROOKIE CELL"
   }
 
-  const getComboMessage = (value) => {
-    if (value >= 5) return "👑 CELLULAR DOMINATION"
-    if (value >= 3) return "🔥 BIOLOGICAL OVERDRIVE"
-    if (value >= 2) return "⚡ SYNTHESIS FLOW"
-    return ""
+  const registerTeam = async () => {
+    const teamId = getTeamId(teamDisplayName)
+
+    await setDoc(
+      doc(db, "ranking", teamId),
+      {
+        team: teamDisplayName,
+        avatar: teamAvatar,
+        xp,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    )
   }
 
-  const updateLiveRanking = (newXp) => {
-    setLiveRanking((prev) => {
-      const updated = [...prev]
-      const existingTeam = updated.find((item) => item.team === teamDisplayName)
+  const updateLiveRanking = async (newXp) => {
+    const teamId = getTeamId(teamDisplayName)
 
-      if (existingTeam) {
-        existingTeam.xp = newXp
-        existingTeam.avatar = teamAvatar
-      } else {
-        updated.push({
-          team: teamDisplayName,
-          xp: newXp,
-          avatar: teamAvatar,
-        })
-      }
-
-      return updated.sort((a, b) => b.xp - a.xp)
-    })
+    await setDoc(
+      doc(db, "ranking", teamId),
+      {
+        team: teamDisplayName,
+        avatar: teamAvatar,
+        xp: newXp,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    )
   }
 
   const resetBattle = () => {
     setSelected(null)
-    setFeedback("")
     setTimeLeft(30)
     setGameOver(false)
     setCurrentQuestion(0)
     setCombo(0)
-    setComboMessage("")
     setBossHp(100)
-    setTransitioning(false)
-    setSuccessAnimation(false)
+    setChapterIntro(false)
+    setFeedbackData(null)
   }
 
-  const resetGame = () => {
+  const resetGameOnly = () => {
     setScreen("home")
     setTeamName("")
     setTeamAvatar("🧑🏻‍🚀")
@@ -269,17 +522,32 @@ export default function App() {
     setCurrentChapter(0)
     setMaxCombo(0)
     setCorrectCount(0)
-    setUnlockedChapters([0])
-    setLiveRanking(initialRanking)
+    setAnsweredTotal(0)
+    setPendingAfterPortal({ screen: "question" })
     resetBattle()
   }
 
-  const startChapter = (index) => {
-    if (!unlockedChapters.includes(index)) return
+  const openGate = (target) => {
+    setGateTarget(target)
+    setScreen("transitionGate")
+  }
 
+  const clearRanking = async () => {
+    const snapshot = await getDocs(collection(db, "ranking"))
+
+    await Promise.all(
+      snapshot.docs.map((rankingDocument) => deleteDoc(rankingDocument.ref))
+    )
+  }
+
+  const startChapter = (index) => {
     setCurrentChapter(index)
     resetBattle()
-    setScreen("bossIntro")
+    openGate({
+      screen: "bossIntro",
+      label: `LOADING ${chapters[index].sector}`,
+      sublabel: `Preparando combate contra ${chapters[index].boss}...`,
+    })
   }
 
   const startCombat = () => {
@@ -288,68 +556,104 @@ export default function App() {
 
     setTimeout(() => {
       setChapterIntro(false)
-    }, 2400)
+    }, 2200)
   }
 
-  const unlockNextChapter = () => {
-    const nextChapter = currentChapter + 1
-
-    if (nextChapter < chapters.length && !unlockedChapters.includes(nextChapter)) {
-      setUnlockedChapters((prev) => [...prev, nextChapter])
+  const finishChapter = () => {
+    if (currentChapter === chapters.length - 1) {
+      setScreen("epilogue")
+    } else {
+      setScreen("chapters")
     }
   }
 
+  const openPortal = (nextAction) => {
+    setPendingAfterPortal(nextAction)
+    setSelected(null)
+    setTimeLeft(30)
+    setGameOver(false)
+    setFeedbackData(null)
+    setScreen("portal")
+  }
+
+  const continueAfterPortal = () => {
+    setScreen(pendingAfterPortal.screen)
+  }
+
+  const continueAfterFeedback = () => {
+    const total = feedbackData?.answeredTotal || answeredTotal
+    const shouldOpenPortal = total > 0 && total % 5 === 0
+
+    setFeedbackData(null)
+
+    if (currentQuestion < chapter.questions.length - 1) {
+      setCurrentQuestion((prev) => prev + 1)
+      setSelected(null)
+      setTimeLeft(30)
+      setGameOver(false)
+
+      if (shouldOpenPortal) {
+        openPortal({ screen: "question" })
+        return
+      }
+
+      setScreen("question")
+      return
+    }
+
+    if (shouldOpenPortal) {
+      openPortal({
+        screen: currentChapter === chapters.length - 1 ? "epilogue" : "chapters",
+      })
+      return
+    }
+
+    finishChapter()
+  }
+
   const handleAnswer = (index) => {
-    if (selected !== null || gameOver || bossDefeated || transitioning || chapterIntro) return
+    if (selected !== null || gameOver || chapterIntro) return
 
     setSelected(index)
 
-    if (index === question.correct) {
+    const newAnsweredTotal = answeredTotal + 1
+    setAnsweredTotal(newAnsweredTotal)
+
+    const isCorrect = index === question.correct
+    let xpEarned = 0
+
+    if (isCorrect) {
       const newCombo = combo + 1
-      const earnedXp = 100 + combo * 20
-      const newXp = xp + earnedXp
-      const newHp = Math.max(bossHp - 25, 0)
-      const message = getComboMessage(newCombo)
+      xpEarned = 100 + combo * 20
+      const newXp = xp + xpEarned
 
       setXp(newXp)
       setCombo(newCombo)
       setMaxCombo((prev) => Math.max(prev, newCombo))
       setCorrectCount((prev) => prev + 1)
-      setComboMessage(message)
-      setBossHp(newHp)
-      setFeedback("PERFECT RESPONSE")
-      setSuccessAnimation(true)
+      setBossHp((prev) => Math.max(prev - 18, 0))
       updateLiveRanking(newXp)
-
-      if (message) {
-        setTimeout(() => {
-          setComboMessage("")
-        }, 1400)
-      }
-
-      if (newHp === 0) {
-        unlockNextChapter()
-
-        if (currentChapter === chapters.length - 1) {
-          setTimeout(() => {
-            setScreen("epilogue")
-          }, 1800)
-        } else {
-          setTimeout(() => {
-            setScreen("chapters")
-          }, 2200)
-        }
-      }
     } else {
       setCombo(0)
-      setComboMessage("")
-      setFeedback("METABOLIC FAILURE")
-      setSuccessAnimation(false)
+      setBossHp((prev) => Math.max(prev - 5, 0))
     }
+
+    setTimeout(() => {
+      setFeedbackData({
+        isCorrect,
+        xpEarned,
+        answeredTotal: newAnsweredTotal,
+        selectedAnswer: question.answers[index],
+        correctAnswer: question.answers[question.correct],
+        explanation: question.feedback,
+      })
+
+      setScreen("feedback")
+    }, 700)
   }
 
   useEffect(() => {
-    if (screen !== "question" || bossDefeated) return
+    if (screen !== "question") return
 
     if (timeLeft > 0 && selected === null && !gameOver && !chapterIntro) {
       const timer = setTimeout(() => {
@@ -361,47 +665,191 @@ export default function App() {
 
     if (timeLeft === 0 && !gameOver) {
       const failTimer = setTimeout(() => {
+        const newAnsweredTotal = answeredTotal + 1
+
+        setAnsweredTotal(newAnsweredTotal)
         setGameOver(true)
         setCombo(0)
-        setComboMessage("")
-        setFeedback("SYSTEM FAILURE")
+        setBossHp((prev) => Math.max(prev - 5, 0))
+
+        setFeedbackData({
+          isCorrect: false,
+          xpEarned: 0,
+          answeredTotal: newAnsweredTotal,
+          selectedAnswer: "Tempo esgotado",
+          correctAnswer: question.answers[question.correct],
+          explanation: question.feedback,
+        })
+
+        setScreen("feedback")
       }, 0)
 
       return () => clearTimeout(failTimer)
     }
-  }, [timeLeft, selected, gameOver, screen, bossDefeated, chapterIntro])
+  }, [timeLeft, selected, gameOver, screen, chapterIntro, answeredTotal, question])
 
-  useEffect(() => {
-    if (screen !== "question" || bossDefeated) return
+  if (screen === "boot") {
+    return (
+      <div className="boot-screen">
+        <div className="boot-background-grid"></div>
+        <div className="boot-core-glow"></div>
 
-    if (selected !== null || gameOver) {
-      const transitionTimer = setTimeout(() => {
-        setTransitioning(true)
-        setSuccessAnimation(false)
-      }, 1500)
+        <div className="boot-panel">
+          <div className="boot-logo-ring">
+            <div className="boot-logo-center">🧬</div>
+          </div>
 
-      const nextTimer = setTimeout(() => {
-        if (currentQuestion < chapter.questions.length - 1) {
-          setCurrentQuestion(currentQuestion + 1)
-          setSelected(null)
-          setFeedback("")
-          setTimeLeft(30)
-          setGameOver(false)
-          setTransitioning(false)
-          setSuccessAnimation(false)
-        } else {
-          setFeedback("CHAPTER COMPLETED")
-          setTransitioning(false)
-          setSuccessAnimation(false)
-        }
-      }, 2450)
+          <span className="boot-system-label">PROJECT HELIX</span>
 
-      return () => {
-        clearTimeout(transitionTimer)
-        clearTimeout(nextTimer)
-      }
-    }
-  }, [selected, gameOver, currentQuestion, screen, chapter.questions.length, bossDefeated])
+          <h1>INITIALIZING CORE...</h1>
+
+          <p>
+            Sincronizando sistema biológico.
+            Preparando acesso ao núcleo Helix.
+          </p>
+
+          <div className="boot-loading">
+            <div className="boot-loading-fill"></div>
+          </div>
+
+          <div className="boot-loading-text">
+            SYSTEM SYNC COMPLETE
+          </div>
+
+          <button
+            className="primary-button"
+            onClick={() => setScreen("home")}
+          >
+            ▶ ENTER SYSTEM
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (screen === "transitionGate") {
+    return (
+      <div className="transition-gate-screen">
+        <div className="phone-shell transition-gate-shell">
+          <div className="gate-darkness"></div>
+
+          <div className="gate-particles">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+
+          <div className="gate-orbit">
+            <div className="gate-ring gate-ring-one"></div>
+            <div className="gate-ring gate-ring-two"></div>
+            <div className="gate-ring gate-ring-three"></div>
+            <div className="gate-center">🧬</div>
+          </div>
+
+          <div className="gate-text">
+            <span>PROJECT HELIX</span>
+            <h1>{gateTarget.label}</h1>
+            <p>{gateTarget.sublabel}</p>
+          </div>
+
+          <button
+            className="primary-button gate-button"
+            onClick={() => setScreen(gateTarget.screen)}
+          >
+            ▶ ENTRAR NO SISTEMA
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (screen === "feedback" && feedbackData) {
+    return (
+      <div className={feedbackData.isCorrect ? "feedback-screen feedback-success" : "feedback-screen feedback-error"}>
+        <div className="phone-shell feedback-shell">
+          <div className="scanline"></div>
+
+          <div className="feedback-portal">
+            <div className="feedback-core">{feedbackData.isCorrect ? "✓" : "!"}</div>
+          </div>
+
+          <span className="system-label">SYSTEM ANALYSIS</span>
+
+          <h1>{feedbackData.isCorrect ? "SYNTHESIS STABLE" : "METABOLIC FAILURE"}</h1>
+
+          <div className="feedback-result">
+            <strong>{feedbackData.isCorrect ? `+${feedbackData.xpEarned} XP` : "+0 XP"}</strong>
+            <p>Resposta correta: {feedbackData.correctAnswer}</p>
+          </div>
+
+          <div className="feedback-explanation">
+            {feedbackData.explanation}
+          </div>
+
+          <button className="primary-button" onClick={continueAfterFeedback}>
+            ▶ CONTINUAR MISSÃO
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (screen === "portal") {
+    return (
+      <div className="portal-screen">
+        <div className="phone-shell portal-shell upgraded-portal-shell">
+          <div className="portal-background-grid"></div>
+          <div className="portal-darkness"></div>
+
+          <div className="portal-particles">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+
+          <div className="portal-warning">
+            ⚠ WARNING • HELIX CORE BREACH
+          </div>
+
+          <div className="portal-ring upgraded-portal-ring">
+            <div className="portal-ring-layer portal-ring-layer-one"></div>
+            <div className="portal-ring-layer portal-ring-layer-two"></div>
+            <div className="portal-ring-layer portal-ring-layer-three"></div>
+            <div className="portal-core upgraded-portal-core">🌀</div>
+          </div>
+
+          <div className="portal-story">
+            <span>CLASSROOM PROTOCOL ACTIVATED</span>
+
+            <h1>
+              THE DIMENSION
+              <br />
+              HAS AWAKENED
+            </h1>
+
+            <p>
+              Uma anomalia biológica atravessou o Sistema Helix.
+            </p>
+
+            <p>
+              As equipes deverão responder corretamente às missões em sala para
+              estabilizar o núcleo e impedir o colapso da dimensão.
+            </p>
+          </div>
+
+          <button className="primary-button portal-action-button" onClick={continueAfterPortal}>
+            ▶ CONTINUAR MISSÃO
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (screen === "bossIntro") {
     return (
@@ -415,6 +863,8 @@ export default function App() {
             <div className="boss-art-glow"></div>
             <div className="boss-art">{chapter.bossIcon}</div>
           </div>
+
+          <span className="sector-label">{chapter.sector}</span>
 
           <h1>{chapter.boss}</h1>
           <h2>{chapter.subtitle}</h2>
@@ -438,14 +888,24 @@ export default function App() {
     return (
       <div className="epilogue-screen">
         <div className="phone-shell epilogue-shell">
-          <h1>EPÍLOGO</h1>
-          <h2>VOCÊS DESPERTARAM O CONHECIMENTO!</h2>
-          <p>A bioquímica é a chave para entender a vida.</p>
-          <p>Continuem explorando. Continuem evoluindo.</p>
+          <div className="epilogue-orb">🧬</div>
 
-          <div className="epilogue-tower">🧬</div>
+          <span className="system-label">HELIX CORE RESTORED</span>
 
-          <button onClick={() => setScreen("ending")}>VER RESULTADO</button>
+          <h1>A HELIX EVOLUIU</h1>
+
+          <h2>
+            O conhecimento foi sintetizado. A missão não terminou — ela despertou.
+          </h2>
+
+          <p>
+            Cada resposta estabilizou um fragmento do sistema. Agora, o núcleo biológico
+            foi restaurado pela inteligência coletiva dos jogadores.
+          </p>
+
+          <button onClick={() => setScreen("ending")}>
+            VER RESULTADO FINAL
+          </button>
         </div>
       </div>
     )
@@ -457,8 +917,10 @@ export default function App() {
         <div className="phone-shell ending-shell">
           <div className="ending-core">🧬</div>
 
+          <span className="system-label">FINAL REPORT</span>
+
           <h1>MISSÃO CONCLUÍDA</h1>
-          <h2>A HELIX FOI SALVA!</h2>
+          <h2>A HELIX FOI SALVA</h2>
 
           <div className="ending-xp">{xp}</div>
 
@@ -486,7 +948,8 @@ export default function App() {
             DEVELOPED BY GUSTAVO VIANA
           </div>
 
-          <button onClick={resetGame}>VOLTAR AO INÍCIO</button>
+          <button onClick={() => setScreen("ranking")}>VER RANKING</button>
+          <button onClick={resetGameOnly}>NOVA EQUIPE</button>
         </div>
       </div>
     )
@@ -495,26 +958,32 @@ export default function App() {
   if (screen === "ranking") {
     return (
       <div className="ranking-screen">
-        <div className="phone-shell">
+        <div className="phone-shell ranking-shell">
           <button className="back-button" onClick={() => setScreen("home")}>←</button>
 
           <h1 className="screen-title">RANKING</h1>
+          <p className="screen-subtitle">CAMPEONATO HELIX AO VIVO</p>
 
-          <div className="ranking-tabs">
-            <span>GLOBAL</span>
-            <span>AO VIVO</span>
+          <div className="ranking-podium">
+            <span>🏆</span>
+            <strong>{liveRanking[0]?.team || "AGUARDANDO EQUIPE"}</strong>
+            <em>{liveRanking[0]?.xp || 0} XP</em>
           </div>
 
           <div className="ranking-list">
-  {liveRanking.length === 0 && (
-    <div className="empty-ranking">
-      Nenhuma equipe jogou ainda.
-    </div>
-  )}
+            {liveRanking.length === 0 && (
+              <div className="empty-ranking">Nenhuma equipe jogou ainda.</div>
+            )}
 
-  {liveRanking.map((item, index) => (
+            {liveRanking.slice(0, 5).map((item, index) => (
               <div
-                className={item.team === teamDisplayName ? "ranking-card your-position" : "ranking-card"}
+                className={
+                  index === 0
+                    ? "ranking-card champion-card"
+                    : item.team === teamDisplayName
+                    ? "ranking-card your-position"
+                    : "ranking-card"
+                }
                 key={index}
               >
                 <strong>{String(index + 1).padStart(2, "0")}</strong>
@@ -524,6 +993,10 @@ export default function App() {
             ))}
           </div>
 
+          <button className="clear-ranking" onClick={clearRanking}>
+            ZERAR RANKING
+          </button>
+
           <BottomNav active="ranking" setScreen={setScreen} />
         </div>
       </div>
@@ -532,25 +1005,8 @@ export default function App() {
 
   if (screen === "question") {
     return (
-      <div
-        className={
-          feedback === "METABOLIC FAILURE"
-            ? "question-screen screen-shake"
-            : bossCritical
-            ? "question-screen critical-mode"
-            : "question-screen"
-        }
-      >
+      <div className={bossCritical ? "question-screen critical-mode" : "question-screen"}>
         <div className="phone-shell battle-shell">
-          {comboMessage && (
-            <div className="combo-overlay">
-              <div>{comboMessage}</div>
-              <span>COMBO x{combo}</span>
-            </div>
-          )}
-
-          {bossCritical && <div className="critical-warning">⚠ CRITICAL THREAT ⚠</div>}
-
           {chapterIntro && (
             <div className="chapter-intro">
               <h1>{chapter.title}</h1>
@@ -560,29 +1016,7 @@ export default function App() {
             </div>
           )}
 
-          {successAnimation && (
-            <div className="success-overlay mega-success">
-              <div>🧬</div>
-              <h2>PROTEIN SYNTHESIS STABLE</h2>
-              <span>+100 XP</span>
-            </div>
-          )}
-
-          {transitioning && (
-            <div className="transition-screen">
-              <div>⚡ ANALYZING NEXT CELL...</div>
-            </div>
-          )}
-
-          {(feedback === "METABOLIC FAILURE" || feedback === "SYSTEM FAILURE") && (
-            <div className="cell-rain">
-              <span>🦠</span>
-              <span>🧫</span>
-              <span>💀</span>
-              <span>🧬</span>
-              <span>🦠</span>
-            </div>
-          )}
+          {bossCritical && <div className="critical-warning">⚠ CRITICAL THREAT ⚠</div>}
 
           <button className="back-button" onClick={() => setScreen("chapters")}>←</button>
 
@@ -594,12 +1028,15 @@ export default function App() {
           <div className="xp-line">
             <span>XP {xp}</span>
             <div>
-              <i style={{ width: `${Math.min(xp / 20, 100)}%` }}></i>
+              <i style={{ width: `${Math.min(xp / 40, 100)}%` }}></i>
             </div>
           </div>
 
           <div className="boss-panel">
-            <div className={bossCritical ? "boss-avatar critical-boss" : "boss-avatar"}>{chapter.bossIcon}</div>
+            <div className={bossCritical ? "boss-avatar critical-boss" : "boss-avatar"}>
+              {chapter.bossIcon}
+            </div>
+
             <h3>{chapter.boss}</h3>
 
             <div className="boss-bar">
@@ -610,15 +1047,8 @@ export default function App() {
           </div>
 
           <div className="question-card">
-            {bossDefeated && <div className="boss-defeated">👑 BOSS ELIMINATED 👑</div>}
-
-            {feedback && !bossDefeated && (
-              <div className={feedback === "PERFECT RESPONSE" ? "success-feedback" : "error-feedback"}>
-                {feedback}
-              </div>
-            )}
-
             <p>PERGUNTA {currentQuestion + 1} / {chapter.questions.length}</p>
+
             <h2>{question.question}</h2>
 
             <div className="answers">
@@ -649,30 +1079,31 @@ export default function App() {
         <div className="phone-shell">
           <button className="back-button" onClick={() => setScreen("team")}>←</button>
 
-          <h1 className="screen-title">CAPÍTULOS</h1>
-          <p className="screen-subtitle">ESCOLHA SEU CAMINHO</p>
+          <h1 className="screen-title">MISSÕES</h1>
+          <p className="screen-subtitle">SETORES DO SISTEMA HELIX</p>
+
+          <div className="mission-progress">
+            <span>PROGRESSO GLOBAL</span>
+            <div>
+              <i style={{ width: `${progressPercent}%` }}></i>
+            </div>
+            <strong>{progressPercent}%</strong>
+          </div>
 
           <div className="chapter-list">
-            {chapters.map((item, index) => {
-              const unlocked = unlockedChapters.includes(index)
+            {chapters.map((item, index) => (
+              <div className="chapter-card unlocked" key={index} onClick={() => startChapter(index)}>
+                <div className="chapter-icon">{item.icon}</div>
 
-              return (
-                <div
-                  className={unlocked ? "chapter-card unlocked" : "chapter-card locked"}
-                  key={index}
-                  onClick={() => startChapter(index)}
-                >
-                  <div className="chapter-icon">{unlocked ? item.icon : "🔒"}</div>
-
-                  <div>
-                    <span>{item.title}</span>
-                    <h2>{item.subtitle}</h2>
-                  </div>
-
-                  <b>{unlocked ? "→" : "🔒"}</b>
+                <div>
+                  <span>{item.sector}</span>
+                  <h2>{item.subtitle}</h2>
+                  <p>{item.boss}</p>
                 </div>
-              )
-            })}
+
+                <b>→</b>
+              </div>
+            ))}
           </div>
 
           <BottomNav active="chapters" setScreen={setScreen} />
@@ -684,17 +1115,16 @@ export default function App() {
   if (screen === "team") {
     return (
       <div className="team-screen">
-        <div className="phone-shell">
+        <div className="phone-shell team-shell">
           <button className="back-button" onClick={() => setScreen("home")}>←</button>
 
-          <h1 className="screen-title">SUA EQUIPE</h1>
-          <p className="screen-subtitle">MONTE SUA EQUIPE PARA A MISSÃO</p>
+          <h1 className="screen-title">ESQUADRÃO</h1>
+          <p className="screen-subtitle">ATIVE SUA EQUIPE PARA A MISSÃO</p>
 
-          <div className="team-slots">
-            <span>{teamAvatar}</span>
-            <span>＋</span>
-            <span>＋</span>
-            <span>＋</span>
+          <div className="squad-core">
+            <div className="squad-avatar-big">{teamAvatar}</div>
+            <span>{teamDisplayName}</span>
+            <small>OPERATORS ONLINE</small>
           </div>
 
           <label>NOME DA EQUIPE</label>
@@ -710,17 +1140,27 @@ export default function App() {
 
           <div className="avatars">
             {avatars.map((avatar) => (
-              <div
+              <button
                 key={avatar}
                 className={teamAvatar === avatar ? "avatar-selected" : ""}
                 onClick={() => setTeamAvatar(avatar)}
               >
                 {avatar}
-              </div>
+              </button>
             ))}
           </div>
 
-          <button className="primary-button" onClick={() => setScreen("chapters")}>
+          <button
+            className="primary-button"
+            onClick={async () => {
+              await registerTeam()
+              openGate({
+                screen: "chapters",
+                label: "SYNCING SQUAD",
+                sublabel: "Equipe registrada. Abrindo mapa de setores...",
+              })
+            }}
+          >
             INICIAR JORNADA
           </button>
 
@@ -732,20 +1172,53 @@ export default function App() {
 
   return (
     <div className="home">
-      <div className="phone-shell home-shell">
+      <div className="phone-shell home-shell cinematic-home">
         <button className="gear">⚙</button>
 
-        <div className="hero-dna">🧬</div>
+        <div className="home-background-grid"></div>
+        <div className="home-background-glow"></div>
 
-        <span className="brand-small">PROJECT</span>
-        <h1>HELIX</h1>
-        <h2>THE PROTEIN AWAKENING</h2>
+        <div className="home-cover-wrap">
+          <img src={logo} alt="Project Helix" className="home-cover" />
+          <div className="home-cover-glow"></div>
+        </div>
 
-        <button className="primary-button" onClick={() => setScreen("team")}>
-          INICIAR MISSÃO
+        <div className="home-system-status">
+          <span></span>
+          HELIX CORE ONLINE
+        </div>
+
+        <button
+          className="primary-button home-start"
+          onClick={() =>
+            openGate({
+              screen: "team",
+              label: "ACCESSING HELIX CORE",
+              sublabel: "Acordando o sistema de bioengenharia...",
+            })
+          }
+        >
+          ▶ START MISSION
         </button>
 
-        <button className="ghost-button">COMO JOGAR</button>
+        <button className="ghost-button">SYSTEM ACCESS</button>
+
+        <div className="home-stats">
+          <div>
+            <span>{chapters.length}</span>
+            <p>SETORES</p>
+          </div>
+
+          <div>
+            <span>{totalQuestions}</span>
+            <p>QUESTÕES</p>
+          </div>
+
+          <div>
+            <span>LIVE</span>
+            <p>RANKING</p>
+          </div>
+        </div>
 
         <p className="credits">A PROJECT BY GUSTAVO VIANA</p>
 
